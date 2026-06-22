@@ -1,0 +1,244 @@
+.dashboard-stats {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.dashboard-panels {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.dashboard-feed {
+  flex: 6;
+  min-width: 0;
+  padding: 20px;
+}
+
+.dashboard-summary {
+  flex: 4;
+  min-width: 0;
+  padding: 20px;
+}
+
+/* Feed header */
+.feed-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.feed-live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #2563EB;
+  letter-spacing: 0.08em;
+  background: #EFF6FF;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.feed-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #2563EB;
+  animation: pulse-dot 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* Camera monitor */
+.camera-monitor {
+  background: #0F172A;
+  border-radius: 8px;
+  height: 172px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.camera-monitor__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+  z-index: 1;
+}
+
+.camera-monitor__icon {
+  color: rgba(255, 255, 255, 0.25);
+  margin-bottom: 4px;
+}
+
+.camera-monitor__label {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.camera-monitor__sub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.05em;
+}
+
+/* Subtle scan-line effect */
+.camera-scanline {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.012) 2px,
+    rgba(255, 255, 255, 0.012) 4px
+  );
+  pointer-events: none;
+}
+
+/* Events */
+.feed-events-wrap {
+  padding-top: 4px;
+}
+
+.feed-events-label {
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 11px;
+}
+
+.feed-events {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.feed-event {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid #E2E8F0;
+  transition: background 0.1s;
+}
+
+.feed-event:last-child { border-bottom: none; }
+
+.feed-event__timeline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 8px;
+  flex-shrink: 0;
+}
+
+.feed-event__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #DBEAFE;
+  border: 1.5px solid #2563EB;
+  flex-shrink: 0;
+}
+
+.feed-event__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.feed-event__name {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #0F172A;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feed-event__right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.feed-event__time { white-space: nowrap; }
+
+/* Class rate column */
+.class-rate-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.class-rate-pct {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0F172A;
+}
+
+.class-rate-bar {
+  width: 64px;
+  height: 3px;
+  background: #E2E8F0;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.class-rate-bar__fill {
+  height: 100%;
+  background: #2563EB;
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+
+/* Summary strip */
+.summary-strip {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 14px 0 0;
+  margin-top: 12px;
+  border-top: 1px solid #E2E8F0;
+}
+
+.summary-strip__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.summary-strip__value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+}
+
+.summary-strip__divider {
+  width: 1px;
+  height: 32px;
+  background: #E2E8F0;
+  flex-shrink: 0;
+}

@@ -1,0 +1,39 @@
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 52px;
+  min-height: 52px;
+  background: #ffffff;
+  border-bottom: 1px solid #F1F5F9;
+  gap: 16px;
+}
+
+.topbar__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0F172A;
+  letter-spacing: -0.01em;
+}
+
+.topbar__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.topbar__date { color: #94A3B8; }
+
+.topbar__divider {
+  width: 1px;
+  height: 12px;
+  background: #E2E8F0;
+}
+
+.topbar__school {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748B;
+}

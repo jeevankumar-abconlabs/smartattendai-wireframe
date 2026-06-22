@@ -1,0 +1,96 @@
+.att-filters {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.att-filter-btn {
+  align-self: flex-end;
+  margin-bottom: 0;
+}
+
+.att-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.att-unknown-avatar {
+  background: #E2E8F0;
+  color: #64748B;
+}
+
+.confidence-score {
+  font-size: 13px;
+  font-weight: 500;
+  color: #0F172A;
+}
+
+.confidence-score.low {
+  color: #64748B;
+}
+
+/* Modal */
+.att-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 24px;
+}
+
+.att-modal {
+  width: 100%;
+  max-width: 480px;
+  padding: 24px;
+  animation: fadeIn 0.15s ease;
+}
+
+.att-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.att-modal__close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #64748B;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.att-modal__close:hover {
+  background: #F8FAFC;
+  color: #0F172A;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* reuse confirm-row from EnrollStudent */
+.confirm-summary {
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.confirm-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.confirm-row:last-child { border-bottom: none; }
+.confirm-row__label { min-width: 140px; }

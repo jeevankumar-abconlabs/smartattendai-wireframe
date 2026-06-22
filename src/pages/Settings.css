@@ -1,0 +1,44 @@
+.settings-section {
+  margin-bottom: 20px;
+  max-width: 680px;
+}
+
+.settings-section__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #0F172A;
+}
+
+.settings-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.settings-section__footer {
+  margin-top: 24px;
+  display: flex;
+  gap: 10px;
+}
+
+/* Slider */
+.settings-threshold-val {
+  margin-left: 8px;
+  color: #2563EB;
+  font-weight: 600;
+}
+
+.settings-slider {
+  width: 100%;
+  max-width: 400px;
+  accent-color: #2563EB;
+  cursor: pointer;
+  height: 4px;
+}
+
+.settings-slider-labels {
+  display: flex;
+  justify-content: space-between;
+  max-width: 400px;
+  margin-top: 4px;
+}
