@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 import './Login.css';
 
 const FEATURES = [
@@ -26,7 +26,7 @@ export default function Login() {
         <div className="login-left__inner">
           <div className="login-brand">
             <div className="login-logo">
-              <Camera size={20} strokeWidth={2} />
+              <img src="/icon.png" alt="SmartAttend AI" className="login-logo-img" />
             </div>
             <span className="login-appname">SmartAttend AI</span>
           </div>
