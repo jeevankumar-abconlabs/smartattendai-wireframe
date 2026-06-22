@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Users, ClipboardList, BarChart2,
-  Activity, Settings, Camera, LogOut
+  Activity, Settings, LogOut
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -21,7 +21,7 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar__brand">
         <div className="sidebar__logo">
-          <Camera size={18} strokeWidth={2} />
+          <img src="/icon.png" alt="SmartAttend AI" className="sidebar__logo-img" />
         </div>
         <span className="sidebar__name">SmartAttend AI</span>
       </div>
