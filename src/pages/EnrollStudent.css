@@ -42,29 +42,22 @@
   margin-top: 24px;
 }
 
-/* Upload */
-.upload-box {
-  border: 2px dashed #E2E8F0;
+/* Webcam capture */
+.webcam-frame {
+  width: 100%;
+  max-width: 360px;
+  aspect-ratio: 4 / 3;
+  background: #0F172A;
   border-radius: 8px;
-  padding: 40px 24px;
+  overflow: hidden;
+  margin: 0 auto 8px;
+}
+
+.enroll-capture-error {
+  color: #DC2626;
+  font-size: 12.5px;
+  margin: 8px 0 0;
   text-align: center;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-  margin-bottom: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.upload-box:hover {
-  border-color: #2563EB;
-  background: #EFF6FF;
-}
-
-.upload-box__icon {
-  color: #64748B;
-  margin-bottom: 4px;
 }
 
 .upload-preview {
@@ -75,10 +68,12 @@
 }
 
 .upload-preview__img {
-  width: 120px;
-  height: 120px;
+  width: 160px;
+  height: 160px;
+  object-fit: cover;
   background: #E2E8F0;
   border-radius: 8px;
+  transform: scaleX(-1);
 }
 
 /* Confirm summary */

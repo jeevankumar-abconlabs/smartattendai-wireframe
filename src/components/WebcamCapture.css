@@ -1,0 +1,31 @@
+.webcam-box {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.webcam-box__video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scaleX(-1); /* mirror, like a selfie camera */
+}
+
+.webcam-box--error {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.webcam-box__error-text {
+  font-size: 12px;
+  max-width: 200px;
+  text-align: center;
+}

@@ -62,7 +62,8 @@
 .camera-monitor {
   background: #0F172A;
   border-radius: 8px;
-  height: 172px;
+  aspect-ratio: 16 / 9;
+  max-height: 340px;
   margin-bottom: 16px;
   display: flex;
   align-items: center;
@@ -71,43 +72,16 @@
   overflow: hidden;
 }
 
-.camera-monitor__inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  position: relative;
-  z-index: 1;
-}
-
-.camera-monitor__icon {
-  color: rgba(255, 255, 255, 0.25);
-  margin-bottom: 4px;
-}
-
-.camera-monitor__label {
-  font-size: 13px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.45);
-}
-
-.camera-monitor__sub {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.25);
-  letter-spacing: 0.05em;
-}
-
-/* Subtle scan-line effect */
-.camera-scanline {
+.camera-monitor__status {
   position: absolute;
   inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(255, 255, 255, 0.012) 2px,
-    rgba(255, 255, 255, 0.012) 4px
-  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(15, 23, 42, 0.55);
   pointer-events: none;
 }
 

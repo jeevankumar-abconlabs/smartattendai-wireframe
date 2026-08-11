@@ -1,15 +1,46 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Badge from '../components/Badge';
-import { attendanceLogs } from '../data/mockData';
+import { supabase } from '../lib/supabase';
 import './AttendanceLog.css';
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function formatTime(iso) {
+  return new Date(iso).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+}
+
+function initialsOf(name) {
+  return name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join('');
+}
 
 export default function AttendanceLog() {
   const [selectedRow, setSelectedRow] = useState(null);
-  const [filters, setFilters] = useState({ class: '', status: '' });
-  const [applied, setApplied] = useState({ class: '', status: '' });
+  const [filters, setFilters] = useState({ date: todayISO(), class: '', status: '' });
+  const [applied, setApplied] = useState({ date: todayISO(), class: '', status: '' });
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const filtered = attendanceLogs.filter((r) => {
-    const matchClass = !applied.class || r.class.startsWith(applied.class + '-') || r.class === applied.class;
+  useEffect(() => {
+    const start = new Date(`${applied.date}T00:00:00`);
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
+
+    supabase
+      .from('attendance_logs')
+      .select('id, created_at, name, class, roll, confidence, status, logged_by')
+      .gte('created_at', start.toISOString())
+      .lt('created_at', end.toISOString())
+      .order('created_at', { ascending: false })
+      .then(({ data, error }) => {
+        if (!error) setRows(data || []);
+        setLoading(false);
+      });
+  }, [applied.date]);
+
+  const filtered = rows.filter((r) => {
+    const matchClass = !applied.class || String(r.class) === applied.class;
     const matchStatus = !applied.status || r.status === applied.status;
     return matchClass && matchStatus;
   });
@@ -24,7 +55,8 @@ export default function AttendanceLog() {
       <div className="card att-filters">
         <div className="form-group">
           <label className="form-label">Date</label>
-          <input type="date" className="form-input" defaultValue="2026-06-22"
+          <input type="date" className="form-input" value={filters.date}
+            onChange={(e) => setFilters((f) => ({ ...f, date: e.target.value }))}
             style={{ maxWidth: 180 }} />
         </div>
         <div className="form-group">
@@ -46,11 +78,10 @@ export default function AttendanceLog() {
             <option value="">All</option>
             <option value="Verified">Verified</option>
             <option value="Unknown Face">Unknown Face</option>
-            <option value="Manual Override">Manual Override</option>
           </select>
         </div>
         <button className="btn-primary att-filter-btn"
-          onClick={() => setApplied({ ...filters })}>
+          onClick={() => { setLoading(true); setApplied({ ...filters }); }}>
           Apply Filters
         </button>
       </div>
@@ -61,7 +92,7 @@ export default function AttendanceLog() {
           <span className="section-title" style={{ marginBottom: 0 }}>
             Recognition Events
           </span>
-          <span className="text-muted text-sm">{filtered.length} records</span>
+          <span className="text-muted text-sm">{loading ? 'Loading…' : `${filtered.length} records`}</span>
         </div>
         <div className="divider" style={{ margin: '12px 0' }} />
         <div className="table-wrapper">
@@ -82,25 +113,25 @@ export default function AttendanceLog() {
               {filtered.map((row) => (
                 <tr key={row.id}>
                   <td className="text-muted text-sm" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                    {row.time}
+                    {formatTime(row.created_at)}
                   </td>
                   <td>
                     <div className="row-name-cell">
                       <div className={`avatar ${row.name === 'Unknown' ? 'att-unknown-avatar' : ''}`}>
-                        {row.initials}
+                        {initialsOf(row.name)}
                       </div>
                       <span className="font-medium">{row.name}</span>
                     </div>
                   </td>
-                  <td>{row.class}</td>
-                  <td className="text-muted">{row.roll}</td>
+                  <td>{row.class ? `Class ${row.class}` : '—'}</td>
+                  <td className="text-muted">{row.roll || '—'}</td>
                   <td>
-                    <span className={`confidence-score ${parseFloat(row.confidence) < 70 ? 'low' : ''}`}>
-                      {row.confidence}
+                    <span className={`confidence-score ${row.confidence < 70 ? 'low' : ''}`}>
+                      {row.confidence}%
                     </span>
                   </td>
                   <td><Badge label={row.status} /></td>
-                  <td className="text-muted text-sm">{row.loggedBy}</td>
+                  <td className="text-muted text-sm">{row.logged_by}</td>
                   <td>
                     <span className="link" onClick={() => setSelectedRow(row)}>View</span>
                   </td>
@@ -108,6 +139,11 @@ export default function AttendanceLog() {
               ))}
             </tbody>
           </table>
+          {!loading && filtered.length === 0 && (
+            <p className="text-muted text-sm" style={{ padding: '16px 0', textAlign: 'center' }}>
+              No attendance records for this date.
+            </p>
+          )}
         </div>
       </div>
 
@@ -122,13 +158,13 @@ export default function AttendanceLog() {
             <div className="divider" style={{ margin: '12px 0' }} />
             <div className="confirm-summary">
               {[
-                ['Timestamp', selectedRow.time],
+                ['Timestamp', formatTime(selectedRow.created_at)],
                 ['Student Name', selectedRow.name],
-                ['Class', selectedRow.class],
-                ['Roll No.', selectedRow.roll],
-                ['Match Confidence', selectedRow.confidence],
+                ['Class', selectedRow.class ? `Class ${selectedRow.class}` : '—'],
+                ['Roll No.', selectedRow.roll || '—'],
+                ['Match Confidence', `${selectedRow.confidence}%`],
                 ['Status', selectedRow.status],
-                ['Logged By', selectedRow.loggedBy],
+                ['Logged By', selectedRow.logged_by],
               ].map(([label, val]) => (
                 <div className="confirm-row" key={label}>
                   <span className="confirm-row__label text-muted text-sm">{label}</span>

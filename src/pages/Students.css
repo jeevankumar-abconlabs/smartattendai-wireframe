@@ -86,3 +86,43 @@
   color: #ffffff;
   border-color: #2563EB;
 }
+
+/* Student profile modal */
+.student-modal-photo-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.student-modal-photo {
+  width: 140px;
+  height: 140px;
+  object-fit: cover;
+  border-radius: 8px;
+  background: #E2E8F0;
+}
+
+.avatar.student-modal-photo-fallback {
+  width: 140px;
+  height: 140px;
+  border-radius: 8px;
+  font-size: 36px;
+}
+
+.student-modal-delete {
+  color: #DC2626;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+}
+
+.student-modal-delete:hover {
+  text-decoration: underline;
+}
+
+.student-modal-delete:disabled {
+  color: #94A3B8;
+  cursor: default;
+}

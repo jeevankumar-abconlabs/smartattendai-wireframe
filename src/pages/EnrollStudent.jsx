@@ -1,33 +1,102 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload, ChevronLeft } from 'lucide-react';
+import { Camera, ChevronLeft, RotateCcw } from 'lucide-react';
 import StepIndicator from '../components/StepIndicator';
+import WebcamCapture from '../components/WebcamCapture';
+import { captureFrame } from '../lib/camera';
+import { supabase } from '../lib/supabase';
+import { detectAllFaces, loadModels } from '../lib/faceRecognition';
 import './EnrollStudent.css';
 
-const STEPS = ['Student Info', 'Upload Photo', 'Confirm'];
+const STEPS = ['Student Info', 'Capture Face', 'Confirm'];
 
 const emptyForm = {
-  fullName: '', roll: '', class: '', section: '', rfid: '',
+  fullName: '', roll: '', class: '', section: '',
 };
 
 export default function EnrollStudent() {
   const navigate = useNavigate();
+  const videoRef = useRef(null);
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(emptyForm);
-  const [uploaded, setUploaded] = useState(false);
+  const [modelsReady, setModelsReady] = useState(false);
+  const [capturing, setCapturing] = useState(false);
+  const [captureError, setCaptureError] = useState('');
+  const [snapshot, setSnapshot] = useState(null); // { canvas, previewUrl, descriptor }
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [toast, setToast] = useState('');
+
+  useEffect(() => {
+    loadModels().then(() => setModelsReady(true));
+  }, []);
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
-  function handleEnroll() {
+  async function handleCapture() {
+    if (!videoRef.current || !modelsReady) return;
+    setCapturing(true);
+    setCaptureError('');
+    try {
+      const canvas = captureFrame(videoRef.current);
+      const detections = await detectAllFaces(canvas);
+      if (detections.length === 0) {
+        setCaptureError('No face detected. Make sure your face is clearly visible and try again.');
+        return;
+      }
+      if (detections.length > 1) {
+        setCaptureError('Multiple faces detected. Only one person should be in frame.');
+        return;
+      }
+      setSnapshot({
+        canvas,
+        previewUrl: canvas.toDataURL('image/jpeg', 0.9),
+        descriptor: detections[0].descriptor,
+      });
+    } finally {
+      setCapturing(false);
+    }
+  }
+
+  function retake() {
+    setSnapshot(null);
+    setCaptureError('');
+  }
+
+  async function handleEnroll() {
+    if (!snapshot) return;
     setSaving(true);
-    setTimeout(() => {
+    setSaveError('');
+    try {
+      const fileName = `${crypto.randomUUID()}.jpg`;
+      const blob = await new Promise((resolve) => snapshot.canvas.toBlob(resolve, 'image/jpeg', 0.9));
+
+      const { error: uploadError } = await supabase.storage
+        .from('student-photos')
+        .upload(fileName, blob, { contentType: 'image/jpeg' });
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage.from('student-photos').getPublicUrl(fileName);
+
+      const { error: insertError } = await supabase.from('students').insert({
+        name: form.fullName,
+        roll: form.roll,
+        class: form.class,
+        section: form.section,
+        photo_url: publicUrl,
+        face_descriptor: Array.from(snapshot.descriptor),
+      });
+      if (insertError) throw insertError;
+
       setToast(`${form.fullName || 'Student'} enrolled successfully.`);
-      setTimeout(() => navigate('/students'), 1800);
-    }, 800);
+      setTimeout(() => navigate('/students'), 1400);
+    } catch (err) {
+      setSaveError(err.message || 'Failed to enroll student. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -78,14 +147,9 @@ export default function EnrollStudent() {
                   </select>
                 </div>
               </div>
-              <div className="form-group">
-                <label className="form-label">RFID Tag ID</label>
-                <input className="form-input" placeholder="Scan or enter tag ID"
-                  value={form.rfid} onChange={(e) => update('rfid', e.target.value)} />
-              </div>
             </div>
             <div className="enroll-actions">
-              <button className="btn-primary" onClick={() => setStep(2)}>
+              <button className="btn-primary" disabled={!form.fullName} onClick={() => setStep(2)}>
                 Next →
               </button>
             </div>
@@ -94,32 +158,39 @@ export default function EnrollStudent() {
 
         {step === 2 && (
           <div className="enroll-step">
-            <h2 className="enroll-step__title">Upload Student Photo</h2>
+            <h2 className="enroll-step__title">Capture Student Face</h2>
             <p className="enroll-step__desc text-muted text-sm">
-              Upload a clear, front-facing photo of the student. This will be used to generate their face profile.
+              Look directly at the camera with good lighting. This photo generates the student's face profile.
             </p>
 
-            {!uploaded ? (
-              <div className="upload-box" onClick={() => setUploaded(true)}>
-                <Upload size={28} className="upload-box__icon" />
-                <p className="font-medium" style={{ fontSize: 14 }}>Click to upload or drag and drop</p>
-                <p className="text-muted text-xs">JPG or PNG, max 5MB</p>
-              </div>
+            {!snapshot ? (
+              <>
+                <div className="webcam-frame">
+                  <WebcamCapture ref={videoRef} />
+                </div>
+                {captureError && <p className="enroll-capture-error">{captureError}</p>}
+                <div className="enroll-actions" style={{ justifyContent: 'center', marginTop: 16 }}>
+                  <button className="btn-primary" onClick={handleCapture} disabled={!modelsReady || capturing}>
+                    <Camera size={15} strokeWidth={2.5} />
+                    {!modelsReady ? 'Loading face detection…' : capturing ? 'Capturing…' : 'Capture Photo'}
+                  </button>
+                </div>
+              </>
             ) : (
               <div className="upload-preview">
-                <div className="upload-preview__img" />
+                <img className="upload-preview__img" src={snapshot.previewUrl} alt="Captured face" />
                 <p className="font-medium text-sm" style={{ marginTop: 10 }}>
                   {form.fullName || 'Student Photo'}
                 </p>
-                <button className="link text-xs" style={{ marginTop: 4 }} onClick={() => setUploaded(false)}>
-                  Remove photo
+                <button className="link text-xs" style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }} onClick={retake}>
+                  <RotateCcw size={12} /> Retake photo
                 </button>
               </div>
             )}
 
             <div className="enroll-actions">
               <button className="btn-secondary" onClick={() => setStep(1)}>← Back</button>
-              <button className="btn-primary" onClick={() => setStep(3)}>Next →</button>
+              <button className="btn-primary" disabled={!snapshot} onClick={() => setStep(3)}>Next →</button>
             </div>
           </div>
         )}
@@ -133,7 +204,6 @@ export default function EnrollStudent() {
                 ['Roll Number', form.roll || '—'],
                 ['Class', form.class ? `Class ${form.class}` : '—'],
                 ['Section', form.section || '—'],
-                ['RFID Tag', form.rfid || '—'],
               ].map(([label, val]) => (
                 <div className="confirm-row" key={label}>
                   <span className="confirm-row__label text-muted text-sm">{label}</span>
@@ -141,6 +211,8 @@ export default function EnrollStudent() {
                 </div>
               ))}
             </div>
+
+            {saveError && <p className="enroll-capture-error">{saveError}</p>}
 
             <div className="enroll-actions" style={{ flexDirection: 'column', gap: 10 }}>
               <button
@@ -152,7 +224,7 @@ export default function EnrollStudent() {
                 {saving ? 'Enrolling…' : 'Enroll Student'}
               </button>
               <button className="btn-secondary" style={{ width: '100%', justifyContent: 'center' }}
-                onClick={() => setStep(2)}>
+                onClick={() => setStep(2)} disabled={saving}>
                 ← Back
               </button>
             </div>
