@@ -1,5 +1,5 @@
-// Snapshots a live <video> frame onto an offscreen canvas — usable both as a
-// face-api.js detection input and (via canvas.toBlob) for upload.
+// Snapshots a live <video> frame onto an offscreen canvas, for preview and
+// (via canvas.toBlob) upload to the backend for face detection/recognition.
 export function captureFrame(videoEl) {
   const canvas = document.createElement('canvas');
   canvas.width = videoEl.videoWidth;

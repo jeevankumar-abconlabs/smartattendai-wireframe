@@ -11,6 +11,17 @@ create table if not exists students (
   enrolled_at timestamptz not null default now()
 );
 
+-- One row per enrolled photo/angle (front, left profile, right profile, ...).
+-- A student can have several; recognition matches against every one of them
+-- and takes the best score, so a side-on camera angle can still match a
+-- profile shot instead of being averaged into a blurry "mean face".
+create table if not exists face_embeddings (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references students(id) on delete cascade,
+  embedding float8[] not null,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists attendance_logs (
   id uuid primary key default gen_random_uuid(),
   student_id uuid references students(id) on delete cascade,
@@ -26,9 +37,11 @@ create table if not exists attendance_logs (
 -- ponytail: no auth exists yet, so RLS is wide open to the anon key.
 -- Tighten these to per-user policies once real auth is added.
 alter table students enable row level security;
+alter table face_embeddings enable row level security;
 alter table attendance_logs enable row level security;
 
 create policy "anon full access" on students for all using (true) with check (true);
+create policy "anon full access" on face_embeddings for all using (true) with check (true);
 create policy "anon full access" on attendance_logs for all using (true) with check (true);
 
 -- Storage bucket for enrollment photos, plus a policy so the anon key can upload/read.

@@ -1,14 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, ChevronLeft, RotateCcw } from 'lucide-react';
+import { Camera, ChevronLeft, X } from 'lucide-react';
 import StepIndicator from '../components/StepIndicator';
 import WebcamCapture from '../components/WebcamCapture';
 import { captureFrame } from '../lib/camera';
-import { supabase } from '../lib/supabase';
-import { detectAllFaces, loadModels } from '../lib/faceRecognition';
+import { enrollStudent } from '../lib/api';
 import './EnrollStudent.css';
 
 const STEPS = ['Student Info', 'Capture Face', 'Confirm'];
+const MAX_SHOTS = 5;
+const RECOMMENDED_ANGLES = ['Front', 'Left profile', 'Right profile'];
 
 const emptyForm = {
   fullName: '', roll: '', class: '', section: '',
@@ -19,77 +20,37 @@ export default function EnrollStudent() {
   const videoRef = useRef(null);
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(emptyForm);
-  const [modelsReady, setModelsReady] = useState(false);
-  const [capturing, setCapturing] = useState(false);
-  const [captureError, setCaptureError] = useState('');
-  const [snapshot, setSnapshot] = useState(null); // { canvas, previewUrl, descriptor }
+  const [snapshots, setSnapshots] = useState([]); // [{ id, canvas, previewUrl }]
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [toast, setToast] = useState('');
-
-  useEffect(() => {
-    loadModels().then(() => setModelsReady(true));
-  }, []);
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
   }
 
-  async function handleCapture() {
-    if (!videoRef.current || !modelsReady) return;
-    setCapturing(true);
-    setCaptureError('');
-    try {
-      const canvas = captureFrame(videoRef.current);
-      const detections = await detectAllFaces(canvas);
-      if (detections.length === 0) {
-        setCaptureError('No face detected. Make sure your face is clearly visible and try again.');
-        return;
-      }
-      if (detections.length > 1) {
-        setCaptureError('Multiple faces detected. Only one person should be in frame.');
-        return;
-      }
-      setSnapshot({
-        canvas,
-        previewUrl: canvas.toDataURL('image/jpeg', 0.9),
-        descriptor: detections[0].descriptor,
-      });
-    } finally {
-      setCapturing(false);
-    }
+  function handleCapture() {
+    if (!videoRef.current || snapshots.length >= MAX_SHOTS) return;
+    const canvas = captureFrame(videoRef.current);
+    setSnapshots((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), canvas, previewUrl: canvas.toDataURL('image/jpeg', 0.9) },
+    ]);
   }
 
-  function retake() {
-    setSnapshot(null);
-    setCaptureError('');
+  function removeSnapshot(id) {
+    setSnapshots((prev) => prev.filter((s) => s.id !== id));
   }
 
   async function handleEnroll() {
-    if (!snapshot) return;
+    if (snapshots.length === 0) return;
     setSaving(true);
     setSaveError('');
     try {
-      const fileName = `${crypto.randomUUID()}.jpg`;
-      const blob = await new Promise((resolve) => snapshot.canvas.toBlob(resolve, 'image/jpeg', 0.9));
-
-      const { error: uploadError } = await supabase.storage
-        .from('student-photos')
-        .upload(fileName, blob, { contentType: 'image/jpeg' });
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage.from('student-photos').getPublicUrl(fileName);
-
-      const { error: insertError } = await supabase.from('students').insert({
-        name: form.fullName,
-        roll: form.roll,
-        class: form.class,
-        section: form.section,
-        photo_url: publicUrl,
-        face_descriptor: Array.from(snapshot.descriptor),
-      });
-      if (insertError) throw insertError;
-
+      const blobs = await Promise.all(
+        snapshots.map((s) => new Promise((resolve) => s.canvas.toBlob(resolve, 'image/jpeg', 0.9)))
+      );
+      await enrollStudent(form, blobs);
       setToast(`${form.fullName || 'Student'} enrolled successfully.`);
       setTimeout(() => navigate('/students'), 1400);
     } catch (err) {
@@ -160,37 +121,49 @@ export default function EnrollStudent() {
           <div className="enroll-step">
             <h2 className="enroll-step__title">Capture Student Face</h2>
             <p className="enroll-step__desc text-muted text-sm">
-              Look directly at the camera with good lighting. This photo generates the student's face profile.
+              Capture a few angles — {RECOMMENDED_ANGLES.join(', ')} — so the student is still recognized
+              when a camera only catches their side. At least 1 photo is required, up to {MAX_SHOTS}.
             </p>
 
-            {!snapshot ? (
-              <>
-                <div className="webcam-frame">
-                  <WebcamCapture ref={videoRef} />
-                </div>
-                {captureError && <p className="enroll-capture-error">{captureError}</p>}
-                <div className="enroll-actions" style={{ justifyContent: 'center', marginTop: 16 }}>
-                  <button className="btn-primary" onClick={handleCapture} disabled={!modelsReady || capturing}>
-                    <Camera size={15} strokeWidth={2.5} />
-                    {!modelsReady ? 'Loading face detection…' : capturing ? 'Capturing…' : 'Capture Photo'}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="upload-preview">
-                <img className="upload-preview__img" src={snapshot.previewUrl} alt="Captured face" />
-                <p className="font-medium text-sm" style={{ marginTop: 10 }}>
-                  {form.fullName || 'Student Photo'}
-                </p>
-                <button className="link text-xs" style={{ marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }} onClick={retake}>
-                  <RotateCcw size={12} /> Retake photo
-                </button>
+            <div className="webcam-frame">
+              <WebcamCapture ref={videoRef} />
+            </div>
+            <div className="enroll-actions" style={{ justifyContent: 'center', marginTop: 16 }}>
+              <button className="btn-primary" onClick={handleCapture} disabled={snapshots.length >= MAX_SHOTS}>
+                <Camera size={15} strokeWidth={2.5} />
+                Capture Photo ({snapshots.length}/{MAX_SHOTS})
+              </button>
+            </div>
+
+            {snapshots.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 16, justifyContent: 'center' }}>
+                {snapshots.map((s, i) => (
+                  <div key={s.id} style={{ position: 'relative' }}>
+                    <img
+                      src={s.previewUrl}
+                      alt={`Captured angle ${i + 1}`}
+                      style={{ width: 88, height: 88, objectFit: 'cover', borderRadius: 8 }}
+                    />
+                    <button
+                      className="link text-xs"
+                      onClick={() => removeSnapshot(s.id)}
+                      style={{
+                        position: 'absolute', top: -6, right: -6, background: '#fff',
+                        borderRadius: '50%', width: 20, height: 20, display: 'flex',
+                        alignItems: 'center', justifyContent: 'center', boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
+                      }}
+                      title="Remove"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
               </div>
             )}
 
             <div className="enroll-actions">
               <button className="btn-secondary" onClick={() => setStep(1)}>← Back</button>
-              <button className="btn-primary" disabled={!snapshot} onClick={() => setStep(3)}>Next →</button>
+              <button className="btn-primary" disabled={snapshots.length === 0} onClick={() => setStep(3)}>Next →</button>
             </div>
           </div>
         )}
@@ -204,6 +177,7 @@ export default function EnrollStudent() {
                 ['Roll Number', form.roll || '—'],
                 ['Class', form.class ? `Class ${form.class}` : '—'],
                 ['Section', form.section || '—'],
+                ['Angles Captured', String(snapshots.length)],
               ].map(([label, val]) => (
                 <div className="confirm-row" key={label}>
                   <span className="confirm-row__label text-muted text-sm">{label}</span>

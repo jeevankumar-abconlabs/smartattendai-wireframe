@@ -3,9 +3,9 @@ import { VideoOff } from 'lucide-react';
 import './WebcamCapture.css';
 
 // Renders a live <video> fed by getUserMedia and exposes the video element
-// itself via ref, so callers can pass it straight into face-api.js or
-// captureFrame() below. One component covers both the enrollment snapshot
-// flow and the dashboard's continuous recognition loop.
+// itself via ref, so callers can pass it straight into captureFrame() below.
+// One component covers both the enrollment snapshot flow and the
+// dashboard's continuous recognition loop.
 const WebcamCapture = forwardRef(function WebcamCapture(_props, ref) {
   const videoRef = useRef(null);
   const [error, setError] = useState('');
